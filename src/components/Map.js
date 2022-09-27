@@ -6,20 +6,24 @@ import axios from "axios";
 import _ from "lodash";
 import Filters from "./Filters";
 import "./Styles.css";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchCountries } from "../redux/actions/countriesActions";
 
 const themeColor = "rgb(51, 136, 255)";
 const hoverColor = "rgb(0, 0, 255)";
 
 function Map() {
   const [countriesJSON, setCountriesJSON] = useState();
+  const allCountries = useSelector((store) => store.allCountries.countries);
+  const dispatch = useDispatch();
 
   useEffect(() => {
-    const fetchData = async () => {
-      const result = await axios("http://localhost:8000/countries/");
-      setMapData(result.data);
-    };
-    fetchData();
+    dispatch(fetchCountries());
   }, []);
+
+  useEffect(() => {
+    setMapData(allCountries);
+  }, [allCountries]);
 
   const setMapData = (data) => {
     if (!data) return;
@@ -34,7 +38,6 @@ function Map() {
       countriesClone.push(country);
     });
     setCountriesJSON(countriesClone);
-    console.log(countriesClone);
   };
 
   const onEachCountry = (country, layer) => {
