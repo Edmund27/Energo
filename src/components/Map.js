@@ -4,6 +4,8 @@ import "leaflet/dist/leaflet.css";
 import { json_EU_krajiny_0 } from "../assets/coordinates";
 import axios from "axios";
 import _ from "lodash";
+import Filters from "./Filters";
+import "./Styles.css";
 
 const themeColor = "rgb(51, 136, 255)";
 const hoverColor = "rgb(0, 0, 255)";
@@ -36,7 +38,6 @@ function Map() {
   };
 
   const onEachCountry = (country, layer) => {
-    // layer.bindPopup(country.price || "Not Available", { permanent: true });
     country.price
       ? layer.bindTooltip(country.properties.NAME + ": " + country.price, {
           permanent: true,
@@ -59,18 +60,22 @@ function Map() {
   }
 
   return (
-    <MapContainer
-      style={{ height: "1000px" }}
-      center={[48.30694, 14.28583]}
-      zoom={5}
-      scrollWheelZoom={true}
-      doubleClickZoom={false}
-    >
-      <GeoJSON
-        data={countriesJSON}
-        onEachFeature={(feature, layer) => onEachCountry(feature, layer)}
-      />
-    </MapContainer>
+    <div>
+      <MapContainer
+        className="map_container"
+        style={{ height: "1000px" }}
+        center={[48.30694, 14.28583]}
+        zoom={5}
+        scrollWheelZoom={true}
+        doubleClickZoom={false}
+      >
+        <Filters></Filters>
+        <GeoJSON
+          data={countriesJSON}
+          onEachFeature={(feature, layer) => onEachCountry(feature, layer)}
+        />
+      </MapContainer>
+    </div>
   );
 }
 
