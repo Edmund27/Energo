@@ -1,15 +1,49 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { MapContainer, GeoJSON } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { json_EU_krajiny_0 } from "../assets/coordinates";
+import axios from "axios";
+import _ from "lodash";
 
-const API_KEY = "82b2b576-7a71-43ff-849f-feeb552493e6";
 const themeColor = "rgb(51, 136, 255)";
 const hoverColor = "rgb(0, 0, 255)";
 
 function Map() {
+  const [countriesJSON, setCountriesJSON] = useState();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const result = await axios("http://localhost:8000/countries/");
+      setMapData(result.data);
+    };
+    fetchData();
+  }, []);
+
+  const setMapData = (data) => {
+    if (!data) return;
+    const mappedData = _.mapValues(_.keyBy(data, "MapCode"), "Price");
+    const countriesClone = [];
+    _.forEach(_.clone(json_EU_krajiny_0.features), (country) => {
+      _.set(
+        country,
+        "price",
+        _.get(mappedData, country.properties.MapCode)?.toString()
+      );
+      countriesClone.push(country);
+    });
+    setCountriesJSON(countriesClone);
+    console.log(countriesClone);
+  };
+
   const onEachCountry = (country, layer) => {
-    layer.bindPopup(country.properties.NAME);
+    // layer.bindPopup(country.price || "Not Available", { permanent: true });
+    country.price
+      ? layer.bindTooltip(country.properties.NAME + ": " + country.price, {
+          permanent: true,
+          opacity: 0.7,
+        })
+      : layer.bindTooltip("Price unavailable", { permanent: false });
+
     layer.on({
       mouseover: (e) => {
         e.target.setStyle({ fillColor: hoverColor });
@@ -20,6 +54,10 @@ function Map() {
     });
   };
 
+  if (!countriesJSON) {
+    return <>Still loading...</>;
+  }
+
   return (
     <MapContainer
       style={{ height: "1000px" }}
@@ -29,7 +67,7 @@ function Map() {
       doubleClickZoom={false}
     >
       <GeoJSON
-        data={json_EU_krajiny_0.features}
+        data={countriesJSON}
         onEachFeature={(feature, layer) => onEachCountry(feature, layer)}
       />
     </MapContainer>
