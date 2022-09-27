@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { MapContainer, GeoJSON } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { json_EU_krajiny_0 } from "../assets/coordinates";
-import axios from "axios";
 import _ from "lodash";
 import Filters from "./Filters";
 import "./Styles.css";
@@ -13,7 +12,6 @@ const themeColor = "rgb(51, 136, 255)";
 const hoverColor = "rgb(0, 0, 255)";
 
 function Map() {
-  const [countriesJSON, setCountriesJSON] = useState();
   const allCountries = useSelector((store) => store.allCountries.countries);
   const dispatch = useDispatch();
 
@@ -21,28 +19,14 @@ function Map() {
     dispatch(fetchCountries());
   }, []);
 
-  useEffect(() => {
-    setMapData(allCountries);
-  }, [allCountries]);
-
-  const setMapData = (data) => {
-    if (!data) return;
-    const mappedData = _.mapValues(_.keyBy(data, "MapCode"), "Price");
-    const countriesClone = [];
-    _.forEach(_.clone(json_EU_krajiny_0.features), (country) => {
-      _.set(
-        country,
-        "price",
-        _.get(mappedData, country.properties.MapCode)?.toString()
-      );
-      countriesClone.push(country);
-    });
-    setCountriesJSON(countriesClone);
-  };
-
   const onEachCountry = (country, layer) => {
-    country.price
-      ? layer.bindTooltip(country.properties.NAME + ": " + country.price, {
+    const price = _.find(
+      allCountries,
+      (c) => country.properties.MapCode === c.MapCode
+    )?.Price;
+
+    price
+      ? layer.bindTooltip(country.properties.NAME + ": " + price, {
           permanent: true,
           opacity: 0.7,
         })
@@ -58,7 +42,7 @@ function Map() {
     });
   };
 
-  if (!countriesJSON) {
+  if (!allCountries.length || !json_EU_krajiny_0) {
     return <>Still loading...</>;
   }
 
@@ -74,7 +58,7 @@ function Map() {
       >
         <Filters></Filters>
         <GeoJSON
-          data={countriesJSON}
+          data={json_EU_krajiny_0}
           onEachFeature={(feature, layer) => onEachCountry(feature, layer)}
         />
       </MapContainer>
